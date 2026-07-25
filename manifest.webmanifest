@@ -1,0 +1,9 @@
+{
+  "name": "SMF Member",
+  "short_name": "SMF Member",
+  "description": "Swabah Marriage Fund member portal",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7faf8",
+  "theme_color": "#0c5c4c"
+}

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0c5c4c" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>SMF Member</title>
+  </head>
+  <body>
+    <main id="app" class="app-shell">
+      <section id="loginScreen" class="login-screen">
+        <div class="brand-mark">SMF</div>
+        <p class="eyebrow">SWABAH MARRIAGE FUND</p>
+        <h1>Your fund, clearly explained.</h1>
+        <p class="intro">View your contributions, savings and investment information securely.</p>
+        <form id="loginForm" class="login-card">
+          <label for="memberId">Membership ID</label>
+          <input id="memberId" name="memberId" autocomplete="username" placeholder="Example: SMF-25-NAM-000" required />
+          <p id="loginMessage" class="form-message" aria-live="polite"></p>
+          <button type="submit">Continue</button>
+        </form>
+        <p class="login-note">Enter your Membership ID. You will stay signed in on this device until you sign out.</p>
+      </section>
+
+      <section id="memberScreen" class="member-screen hidden">
+        <header class="topbar">
+          <div><p class="eyebrow">SWABAH MARRIAGE FUND</p><h2 id="memberName">Member</h2></div>
+          <button id="logoutButton" class="icon-button" aria-label="Sign out">↪</button>
+        </header>
+
+        <div class="welcome"><p id="memberIdText"></p><strong id="updatedText"></strong></div>
+
+        <nav class="tabs" aria-label="Member information">
+          <button class="tab active" data-tab="general">General</button>
+          <button class="tab" data-tab="investment">Investment</button>
+        </nav>
+
+        <section id="generalPanel" class="tab-panel">
+          <div class="hero-card"><p>Total contributions</p><strong id="totalPaid">₹0</strong><span id="monthsPaid">0 months paid</span></div>
+          <div class="metric-grid">
+            <article class="metric-card"><p>SSF savings</p><strong id="ssfTotal">₹0</strong><span>Non-investment fund</span></article>
+            <article class="metric-card"><p>SIF investment</p><strong id="sifTotal">₹0</strong><span>Allocated for investment</span></article>
+          </div>
+          <article class="status-card"><div><p>Contribution status</p><strong id="paymentStatus">Up to date</strong></div><span id="pendingMonths" class="status-pill">0 pending</span></article>
+          <section class="section"><div class="section-heading"><h3>Recent payments</h3><button id="paymentsToggle" class="text-button">View all</button></div><div id="paymentsList" class="payments-list"></div></section>
+          <section class="section"><div class="section-heading"><h3>Announcements</h3></div><div id="announcementsList" class="payments-list"></div></section>
+        </section>
+
+        <section id="investmentPanel" class="tab-panel hidden">
+          <div id="noInvestment" class="empty-state hidden"><div class="empty-icon">₹</div><h3>No investment yet</h3><p>You do not currently have an SIF investment allocation. Your contribution details are available under General.</p></div>
+          <div id="investmentContent">
+            <div class="hero-card investment-card"><p>Your current investment value</p><strong id="fundValue">₹0</strong><span id="fundDate">Updated today</span></div>
+            <div class="metric-grid"><article class="metric-card"><p>Your amount invested</p><strong id="investedAmount">₹0</strong><span>SIF contribution total</span></article><article class="metric-card"><p>Your return</p><strong id="returnPercent">0.00%</strong><span>Investment performance</span></article></div>
+            <div id="profitCard" class="profit-card"><div><p>Your profit / loss</p><strong id="profitLoss">₹0</strong></div><span id="investmentStatus">Profit</span></div>
+            <section class="section"><div class="section-heading"><div><h3>SMF fund performance</h3><p>Daily combined investment value</p></div><div class="legend"><i></i><span id="chartLegend">Profit</span></div></div><div id="chart" class="line-chart" role="img" aria-label="Investment performance line chart"></div><div id="chartLabels" class="chart-labels"></div></section>
+            <p class="investment-note">Your investment figures above come from Member Investment Summary. The graph uses the daily values entered in Investment Master.</p>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
