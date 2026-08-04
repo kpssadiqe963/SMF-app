@@ -82,7 +82,6 @@ async function loadInvestment(investment, memberSifTotal) {
     renderInvestment(history);
   } catch (error) { byId('investmentContent').innerHTML = `<div class="empty-state"><div class="empty-icon">!</div><h3>Investment data unavailable</h3><p>${error.message}</p></div>`; }
 }
-
 function renderInvestment(history) {
   const latest = history.at(-1);
   const diff = Number(latest.profitLoss);
@@ -91,35 +90,42 @@ function renderInvestment(history) {
   byId('chartLegend').textContent = diff < 0 ? 'Loss' : 'Profit';
   document.querySelector('.legend i').style.background = color;
 
-  const currentValues = history.map(row => Number(row.currentTotalValue));
-  const investedValues = history.map(row => Number(row.totalSifInvested));
+  const values = history.map(row => Number(row.currentTotalValue));
+  const breakEvenValues = history.map(row => Number(row.totalSifInvested));
 
-  // Includes the break-even line in the graph scale.
-  const allValues = [...currentValues, ...investedValues];
-  const min = Math.min(...allValues) * 0.996;
-  const max = Math.max(...allValues) * 1.004;
-  const span = max - min || 1;
+  const allValues = [...values, ...breakEvenValues];
+  const minValue = Math.floor(Math.min(...allValues) / 1000) * 1000;
+  const maxValue = Math.ceil(Math.max(...allValues) / 1000) * 1000;
+  const range = maxValue - minValue || 1;
 
-  const pointY = value => 100 - ((value - min) / span) * 88 - 6;
+  const pointY = value => 100 - ((value - minValue) / range) * 88 - 6;
+  const pointX = index => (index / Math.max(history.length - 1, 1)) * 100;
 
-  const valuePoints = currentValues
-    .map((value, index) =>
-      `${(index / Math.max(currentValues.length - 1, 1)) * 100},${pointY(value)}`
-    )
+  const valuePoints = values
+    .map((value, index) => `${pointX(index)},${pointY(value)}`)
     .join(' ');
 
-  const breakEvenPoints = investedValues
-    .map((value, index) =>
-      `${(index / Math.max(investedValues.length - 1, 1)) * 100},${pointY(value)}`
-    )
+  const breakEvenPoints = breakEvenValues
+    .map((value, index) => `${pointX(index)},${pointY(value)}`)
     .join(' ');
 
-  const breakEvenY = pointY(investedValues.at(-1));
+  const formatAxis = value =>
+    `₹${Math.round(value).toLocaleString('en-IN')}`;
+
+  const middleValue = Math.round((minValue + maxValue) / 2);
+  const zeroProfitY = pointY(breakEvenValues.at(-1));
 
   byId('chart').innerHTML = `
-    <span class="zero-profit-label" style="top:${breakEvenY}%">
-      ₹0 profit / loss
+    <div class="chart-y-labels">
+      <span>${formatAxis(maxValue)}</span>
+      <span>${formatAxis(middleValue)}</span>
+      <span>${formatAxis(minValue)}</span>
+    </div>
+
+    <span class="zero-profit-label" style="top:${zeroProfitY}%">
+      ₹0 profit/loss
     </span>
+
     <svg viewBox="0 0 100 100" preserveAspectRatio="none">
       <polyline
         points="${breakEvenPoints}"
@@ -140,6 +146,17 @@ function renderInvestment(history) {
       />
     </svg>`;
 
-  byId('chartLabels').innerHTML =
-    `<span>${history[0].date}</span><span>${latest.date}</span>`;
+  const tickCount = Math.min(history.length, 4);
+  const tickIndexes = [...new Set(
+    Array.from(
+      { length: tickCount },
+      (_, index) => Math.round(index * (history.length - 1) / (tickCount - 1 || 1))
+    )
+  )];
+
+  byId('chartLabels').innerHTML = tickIndexes
+    .map(index =>
+      `<span style="left:${pointX(index)}%">${history[index].date}</span>`
+    )
+    .join('');
 }
