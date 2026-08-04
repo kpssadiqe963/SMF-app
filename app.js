@@ -84,18 +84,62 @@ async function loadInvestment(investment, memberSifTotal) {
 }
 
 function renderInvestment(history) {
-  const latest = history.at(-1), diff = Number(latest.profitLoss);
+  const latest = history.at(-1);
+  const diff = Number(latest.profitLoss);
   const color = diff < 0 ? '#c83a3a' : '#137547';
-  byId('chartLegend').textContent = diff < 0 ? 'Loss' : 'Profit'; document.querySelector('.legend i').style.background = color;
-  const values = history.map(row => Number(row.currentTotalValue)), min = Math.min(...values) * .996, max = Math.max(...values) * 1.004, span = max - min || 1;
-  const points = values.map((value, index) => `${(index / Math.max(values.length - 1, 1)) * 100},${100 - ((value - min) / span) * 92 - 4}`).join(' ');
-  byId('chart').innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="2.3" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  byId('chartLabels').innerHTML = `<span>${history[0].date}</span><span>${latest.date}</span>`;
-}
 
-byId('loginForm').addEventListener('submit', event => { event.preventDefault(); signIn(byId('memberId').value); });
-byId('logoutButton').addEventListener('click', () => { localStorage.removeItem('smfMemberId'); currentMember = null; byId('memberScreen').classList.add('hidden'); byId('loginScreen').classList.remove('hidden'); setLoginMessage(''); });
-byId('paymentsToggle').addEventListener('click', () => { showAllPayments = !showAllPayments; renderPayments(currentMember.payments); });
-document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab === button)); byId('generalPanel').classList.toggle('hidden', button.dataset.tab !== 'general'); byId('investmentPanel').classList.toggle('hidden', button.dataset.tab !== 'investment'); }));
-const savedMemberId = localStorage.getItem('smfMemberId'); if (savedMemberId) signIn(savedMemberId);
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js');
+  byId('chartLegend').textContent = diff < 0 ? 'Loss' : 'Profit';
+  document.querySelector('.legend i').style.background = color;
+
+  const currentValues = history.map(row => Number(row.currentTotalValue));
+  const investedValues = history.map(row => Number(row.totalSifInvested));
+
+  // Includes the break-even line in the graph scale.
+  const allValues = [...currentValues, ...investedValues];
+  const min = Math.min(...allValues) * 0.996;
+  const max = Math.max(...allValues) * 1.004;
+  const span = max - min || 1;
+
+  const pointY = value => 100 - ((value - min) / span) * 88 - 6;
+
+  const valuePoints = currentValues
+    .map((value, index) =>
+      `${(index / Math.max(currentValues.length - 1, 1)) * 100},${pointY(value)}`
+    )
+    .join(' ');
+
+  const breakEvenPoints = investedValues
+    .map((value, index) =>
+      `${(index / Math.max(investedValues.length - 1, 1)) * 100},${pointY(value)}`
+    )
+    .join(' ');
+
+  const breakEvenY = pointY(investedValues.at(-1));
+
+  byId('chart').innerHTML = `
+    <span class="zero-profit-label" style="top:${breakEvenY}%">
+      ₹0 profit / loss
+    </span>
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+      <polyline
+        points="${breakEvenPoints}"
+        fill="none"
+        stroke="#889692"
+        stroke-width="1"
+        stroke-dasharray="3 3"
+        vector-effect="non-scaling-stroke"
+      />
+      <polyline
+        points="${valuePoints}"
+        fill="none"
+        stroke="${color}"
+        stroke-width="2.3"
+        vector-effect="non-scaling-stroke"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>`;
+
+  byId('chartLabels').innerHTML =
+    `<span>${history[0].date}</span><span>${latest.date}</span>`;
+}
