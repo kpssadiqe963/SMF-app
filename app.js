@@ -37,8 +37,8 @@ function showMember() {
   byId('monthsPaid').textContent = `${summary.monthsPaid || 0} months paid`;
   byId('ssfTotal').textContent = money(summary.ssfTotal);
   byId('sifTotal').textContent = money(summary.sifTotal);
-  byId('pendingMonths').textContent = `${summary.pendingMonths || 0} pending`;
-  byId('paymentStatus').textContent = Number(summary.pendingMonths || 0) ? 'Payment due' : 'Up to date';
+  byId('balanceAmount').textContent = money(summary.balanceAmount);
+  byId('paymentStatus').textContent = Number(summary.balanceAmount || 0) > 0 ? 'Payment due' : 'Up to date';
   showAllPayments = false;
   renderPayments(payments);
   byId('announcementsList').innerHTML = announcements.length ? announcements.map(a => `<article class="announcement"><strong>${a.title}</strong><p>${a.message}</p></article>`).join('') : '<p class="muted-copy">No current announcements.</p>';
@@ -82,81 +82,20 @@ async function loadInvestment(investment, memberSifTotal) {
     renderInvestment(history);
   } catch (error) { byId('investmentContent').innerHTML = `<div class="empty-state"><div class="empty-icon">!</div><h3>Investment data unavailable</h3><p>${error.message}</p></div>`; }
 }
+
 function renderInvestment(history) {
-  const latest = history.at(-1);
-  const diff = Number(latest.profitLoss);
+  const latest = history.at(-1), diff = Number(latest.profitLoss);
   const color = diff < 0 ? '#c83a3a' : '#137547';
-
-  byId('chartLegend').textContent = diff < 0 ? 'Loss' : 'Profit';
-  document.querySelector('.legend i').style.background = color;
-
-  const values = history.map(row => Number(row.currentTotalValue));
-  const breakEvenValues = history.map(row => Number(row.totalSifInvested));
-
-  const allValues = [...values, ...breakEvenValues];
-  const minValue = Math.floor(Math.min(...allValues) / 1000) * 1000;
-  const maxValue = Math.ceil(Math.max(...allValues) / 1000) * 1000;
-  const range = maxValue - minValue || 1;
-
-  const pointY = value => 100 - ((value - minValue) / range) * 88 - 6;
-  const pointX = index => (index / Math.max(history.length - 1, 1)) * 100;
-
-  const valuePoints = values
-    .map((value, index) => `${pointX(index)},${pointY(value)}`)
-    .join(' ');
-
-  const breakEvenPoints = breakEvenValues
-    .map((value, index) => `${pointX(index)},${pointY(value)}`)
-    .join(' ');
-
-  const formatAxis = value =>
-    `₹${Math.round(value).toLocaleString('en-IN')}`;
-
-  const middleValue = Math.round((minValue + maxValue) / 2);
-  const zeroProfitY = pointY(breakEvenValues.at(-1));
-
-  byId('chart').innerHTML = `
-    <div class="chart-y-labels">
-      <span>${formatAxis(maxValue)}</span>
-      <span>${formatAxis(middleValue)}</span>
-      <span>${formatAxis(minValue)}</span>
-    </div>
-
-    <span class="zero-profit-label" style="top:${zeroProfitY}%">
-      ₹0 profit/loss
-    </span>
-
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-      <polyline
-        points="${breakEvenPoints}"
-        fill="none"
-        stroke="#889692"
-        stroke-width="1"
-        stroke-dasharray="3 3"
-        vector-effect="non-scaling-stroke"
-      />
-      <polyline
-        points="${valuePoints}"
-        fill="none"
-        stroke="${color}"
-        stroke-width="2.3"
-        vector-effect="non-scaling-stroke"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-    </svg>`;
-
-  const tickCount = Math.min(history.length, 4);
-  const tickIndexes = [...new Set(
-    Array.from(
-      { length: tickCount },
-      (_, index) => Math.round(index * (history.length - 1) / (tickCount - 1 || 1))
-    )
-  )];
-
-  byId('chartLabels').innerHTML = tickIndexes
-    .map(index =>
-      `<span style="left:${pointX(index)}%">${history[index].date}</span>`
-    )
-    .join('');
+  byId('chartLegend').textContent = diff < 0 ? 'Loss' : 'Profit'; document.querySelector('.legend i').style.background = color;
+  const values = history.map(row => Number(row.currentTotalValue)), min = Math.min(...values) * .996, max = Math.max(...values) * 1.004, span = max - min || 1;
+  const points = values.map((value, index) => `${(index / Math.max(values.length - 1, 1)) * 100},${100 - ((value - min) / span) * 92 - 4}`).join(' ');
+  byId('chart').innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="2.3" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  byId('chartLabels').innerHTML = `<span>${history[0].date}</span><span>${latest.date}</span>`;
 }
+
+byId('loginForm').addEventListener('submit', event => { event.preventDefault(); signIn(byId('memberId').value); });
+byId('logoutButton').addEventListener('click', () => { localStorage.removeItem('smfMemberId'); currentMember = null; byId('memberScreen').classList.add('hidden'); byId('loginScreen').classList.remove('hidden'); setLoginMessage(''); });
+byId('paymentsToggle').addEventListener('click', () => { showAllPayments = !showAllPayments; renderPayments(currentMember.payments); });
+document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab === button)); byId('generalPanel').classList.toggle('hidden', button.dataset.tab !== 'general'); byId('investmentPanel').classList.toggle('hidden', button.dataset.tab !== 'investment'); }));
+const savedMemberId = localStorage.getItem('smfMemberId'); if (savedMemberId) signIn(savedMemberId);
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js');
