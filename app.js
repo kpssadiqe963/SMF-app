@@ -74,14 +74,18 @@ function showMember() {
   byId('withdrawalSummary').classList.toggle('hidden', !hasWithdrawal);
 
   if (hasWithdrawal) {
-    byId('withdrawnAmount').textContent = money(summary.withdrawn);
-    byId('balanceToPay').textContent = money(summary.balanceToPay);
-  }
+  byId('withdrawnAmount').textContent = money(summary.withdrawn);
 
-  byId('paymentStatus').textContent =
-    hasWithdrawal && Number(summary.balanceToPay || 0) > 0
-      ? 'Balance payment due'
-      : 'Up to date';
+  // Sheet stores payable balance as a negative amount.
+  // App shows the amount due without the minus sign.
+  byId('balanceToPay').textContent =
+    money(Math.abs(Number(summary.balanceToPay || 0)));
+}
+
+byId('paymentStatus').textContent =
+  hasWithdrawal && Number(summary.balanceToPay || 0) < 0
+    ? 'Balance payment due'
+    : 'Up to date';
 
   showAllPayments = false;
   renderPayments(payments);
