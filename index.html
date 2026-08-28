@@ -39,15 +39,62 @@
         </nav>
 
         <section id="generalPanel" class="tab-panel">
-          <div class="hero-card"><p>Total contributions</p><strong id="totalPaid">₹0</strong><span id="monthsPaid">0 months paid</span></div>
-          <div class="metric-grid">
-            <article class="metric-card"><p>SSF savings</p><strong id="ssfTotal">₹0</strong><span>Non-investment fund</span></article>
-            <article class="metric-card"><p>SIF investment</p><strong id="sifTotal">₹0</strong><span>Allocated for investment</span></article>
-          </div>
-          <article class="status-card"><div><p>Contribution status</p><strong id="paymentStatus">Up to date</strong></div><div class="balance-box"><span>Balance to pay</span><strong id="balanceAmount">₹0</strong></div></article>
-          <section class="section"><div class="section-heading"><h3>Recent payments</h3><button id="paymentsToggle" class="text-button">View all</button></div><div id="paymentsList" class="payments-list"></div></section>
-          <section class="section"><div class="section-heading"><h3>Announcements</h3></div><div id="announcementsList" class="payments-list"></div></section>
-        </section>
+  <div class="hero-card">
+    <p>Total contributions</p>
+    <strong id="totalPaid">₹0</strong>
+    <span id="monthsPaid">0 months paid</span>
+  </div>
+
+  <section id="withdrawalSummary" class="withdrawal-summary hidden">
+    <article class="withdrawal-card">
+      <p>Amount withdrawn</p>
+      <strong id="withdrawnAmount">₹0</strong>
+      <span>Withdrawn for marriage or other approved purpose</span>
+    </article>
+
+    <article class="balance-pay-card">
+      <p>Balance to pay</p>
+      <strong id="balanceToPay">₹0</strong>
+      <span>Amount due to complete the fund contract</span>
+    </article>
+  </section>
+
+  <div class="metric-grid">
+    <article class="metric-card">
+      <p>SSF savings</p>
+      <strong id="ssfTotal">₹0</strong>
+      <span>Non-investment fund</span>
+    </article>
+
+    <article class="metric-card">
+      <p>SIF investment</p>
+      <strong id="sifTotal">₹0</strong>
+      <span>Allocated for investment</span>
+    </article>
+  </div>
+
+  <article class="status-card">
+    <div>
+      <p>Contribution status</p>
+      <strong id="paymentStatus">Up to date</strong>
+    </div>
+  </article>
+
+  <section class="section">
+    <div class="section-heading">
+      <h3>Recent payments</h3>
+      <button id="paymentsToggle" class="text-button">View all</button>
+    </div>
+    <div id="paymentsList" class="payments-list"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-heading">
+      <h3>Announcements</h3>
+    </div>
+    <div id="announcementsList" class="payments-list"></div>
+  </section>
+</section>
 
         <section id="investmentPanel" class="tab-panel hidden">
           <div id="noInvestment" class="empty-state hidden"><div class="empty-icon">₹</div><h3>No investment yet</h3><p>You do not currently have an SIF investment allocation. Your contribution details are available under General.</p></div>
