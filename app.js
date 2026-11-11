@@ -120,17 +120,23 @@ function renderAdminTransactions() {
   const search = byId('adminSearch').value.trim().toLowerCase();
   const filtered = adminTransactions.filter(transaction => `${transaction.name} ${transaction.memberId}`.toLowerCase().includes(search));
   byId('adminCount').textContent = `${filtered.length} transaction${filtered.length === 1 ? '' : 's'} shown`;
-  byId('adminTransactions').innerHTML = filtered.length ? filtered.map(t => `<article class="transaction-card"><div class="transaction-top"><div><strong>${escapeHtml(t.name)}</strong><span>${escapeHtml(t.memberId)}</span></div><strong>${money(t.totalAmount)}</strong></div><div class="transaction-detail"><span>${escapeHtml(t.month)} ${escapeHtml(t.year)} · ${escapeHtml(t.date)}</span><span>SSF ${money(t.ssfAmount)} · SIF ${money(t.sifAmount)}</span></div>${t.sendReport ? `<button class="report-button" data-transaction-index="${adminTransactions.indexOf(t)}" ${t.whatsAppNumber ? '' : 'disabled'}>${t.whatsAppNumber ? 'Send report' : 'No WhatsApp number'}</button>` : ''}</article>`).join('') : '<p class="muted-copy">No matching transactions.</p>';
+  byId('adminTransactions').innerHTML = filtered.length ? filtered.map(t => `<article class="transaction-card"><div class="transaction-top"><div><strong>${escapeHtml(t.name)}</strong><span>${escapeHtml(t.memberId)}</span></div><strong>${money(t.totalAmount)}</strong></div><div class="transaction-detail"><span>${escapeHtml(t.month)} ${escapeHtml(t.year)} · ${escapeHtml(t.date)}</span><span>SSF ${money(t.ssfAmount)} · SIF ${money(t.sifAmount)}</span></div>${t.sendReport ? `<button class="report-button" data-transaction-index="${adminTransactions.indexOf(t)}" ${t.whatsAppNumber ? '' : 'disabled'}>${t.whatsAppNumber ? 'Send report' : 'No WhatsApp number'}</button>` : t.reportSent ? '<span class="sent-status">Sent</span>' : ''}</article>`).join('') : '<p class="muted-copy">No matching transactions.</p>';
 }
 
-function sendReport(transaction) {
+async function sendReport(transaction) {
   const digits = String(transaction.whatsAppNumber || '').replace(/\D/g, '');
   const phone = digits.length === 10 ? `91${digits}` : digits;
   if (phone.length < 11) return alert('This member does not have a valid WhatsApp Number in the Members sheet.');
   const message = transaction.isInvestmentAdjustment
-    ? `Dear ${transaction.name},\n\nYour SMF contribution of ${money(transaction.totalAmount)} dated ${transaction.date} has been recorded.\n\nThis payment relates to an investment amount adjusted from a previous month’s contribution. Please make future contributions on time to maintain SIP investment discipline. Late payments affect investment planning; if delays continue, SMF may need to review or pause investment on your behalf.\n\nYou can check your contribution history, balance amount and investment details here:\n${APP_LINK}\n\nThank you for your cooperation.\n— Swabah Marriage Fund`
-    : `Dear ${transaction.name},\n\nYour SMF contribution of ${money(transaction.totalAmount)} for ${transaction.month} ${transaction.year}, dated ${transaction.date}, has been successfully received and recorded.\n\nYou can check your contribution history, balance amount and investment details here:\n${APP_LINK}\n\nThank you for your timely contribution.\n— Swabah Marriage Fund`;
+    ? `Dear ${transaction.name},\nMembership ID: ${transaction.memberId}\n\nYour SMF contribution of ${money(transaction.totalAmount)} dated ${transaction.date} has been recorded.\n\nThis payment relates to an investment amount adjusted from a previous month’s contribution. Please make future contributions on time to maintain SIP investment discipline. Late payments affect investment planning; if delays continue, SMF may need to review or pause investment on your behalf.\n\nYou can check your contribution history, balance amount and investment details here:\n${APP_LINK}\n\nThank you for your cooperation.\n— Swabah Marriage Fund`
+    : `Dear ${transaction.name},\nMembership ID: ${transaction.memberId}\n\nYour SMF contribution of ${money(transaction.totalAmount)} for ${transaction.month} ${transaction.year}, dated ${transaction.date}, has been successfully received and recorded.\n\nYou can check your contribution history, balance amount and investment details here:\n${APP_LINK}\n\nThank you for your timely contribution.\n— Swabah Marriage Fund`;
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+  try {
+    await api('markSent', { username: ADMIN_USERNAME, row: transaction.sourceRow, cacheBust: Date.now() });
+    transaction.sendReport = false;
+    transaction.reportSent = true;
+    renderAdminTransactions();
+  } catch (error) { alert(`WhatsApp opened, but the sheet could not be marked Sent: ${error.message}`); }
 }
 
 byId('loginForm').addEventListener('submit', event => { event.preventDefault(); signIn(byId('memberId').value); });
